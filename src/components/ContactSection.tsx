@@ -57,7 +57,7 @@ const ContactSection: React.FC = () => {
         boxSizing: 'border-box'
       }}>
         <p style={{
-          color: '#aaa',
+          color: '#ccc',
           fontSize: 15,
           lineHeight: 1.7,
           margin: window.innerWidth <= 768 ? '0 20px' : '0 20px',
