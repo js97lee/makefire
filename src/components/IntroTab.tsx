@@ -38,7 +38,7 @@ const IntroTab: React.FC<IntroTabProps> = ({ setActiveTab }) => {
         
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div className="english-text" style={{
-            fontSize: 48,
+            fontSize: window.innerWidth <= 768 ? 32 : 48,
             marginBottom: 12,
             fontWeight: 300,
             letterSpacing: '2px',
@@ -49,7 +49,7 @@ const IntroTab: React.FC<IntroTabProps> = ({ setActiveTab }) => {
           
           <h2 style={{
             color: '#4a90e2',
-            fontSize: 28,
+            fontSize: window.innerWidth <= 768 ? 20 : 28,
             fontWeight: 700,
             marginBottom: 16,
             lineHeight: 1.2
@@ -59,7 +59,7 @@ const IntroTab: React.FC<IntroTabProps> = ({ setActiveTab }) => {
           
           <p style={{
             color: '#aaa',
-            fontSize: 18,
+            fontSize: window.innerWidth <= 768 ? 14 : 18,
             lineHeight: 1.6,
             maxWidth: 600,
             margin: '0 auto 32px auto'

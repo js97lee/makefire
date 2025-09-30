@@ -22,8 +22,8 @@ const ContactSection: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center'
-        }}>
-          📧
+        }}        >
+          📮
         </div>
         <span>문의</span>
         <span style={{ margin: '0 4px' }}>|</span>
@@ -63,8 +63,8 @@ const ContactSection: React.FC = () => {
           margin: window.innerWidth <= 768 ? '0 20px' : '0 20px',
           textAlign: 'center'
         }}>
-          배당 투자에 관심이 많은 UX디자이너, Scarlett 입니다. 열심히 웹페이지를 만들어보고 있습니다.<br />
-          관련해서 도움을 주시거나, 혹은 이야기를 함께 나누고 싶은 분이 있으시다면 편하게 메일 보내주세요. 투자 이야기 환영입니다 :)
+          배당 투자에 관심이 많은 UX디자이너, Scarlett 입니다 🐰💕 열심히 '뚝딱뚝딱' 🔨 ✨ 웹페이지를 만들어보고 있습니다 💻 🤍<br />
+          관련해서 도움을 주시거나, 혹은 이야기를 함께 나누고 싶은 분이 있으시다면 편하게 메일 보내주세요 💌 투자 이야기 대환영입니다! 💰 ✨
         </p>
       </div>
     </div>

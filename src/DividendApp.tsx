@@ -4,6 +4,7 @@ import { formatNumber, parseNumber, generateId, calculateMonthsToTarget, formatP
 import { dividendFrequencies, localStockData, defaultScenarios } from './data/constants';
 import { useStockSearch } from './hooks/useStockSearch';
 import { useSimulation } from './hooks/useSimulation';
+import { usePortfolioStorage } from './hooks/useLocalStorage';
 import AdSenseAd from './components/AdSenseAd';
 import IntroTab from './components/IntroTab';
 import ContactSection from './components/ContactSection';
@@ -26,11 +27,11 @@ const DividendApp: React.FC = () => {
     manualDividend: ''
   });
   
-  // 시뮬레이션 입력값
+  // 시뮬레이션 입력값 (기본값 설정으로 그래프 연동 개선)
   const [simulationInputs, setSimulationInputs] = useState<SimulationInputs>({
-    initialCapital: 0,
-    monthlyDividend: 0,
-    targetAmount: 0
+    initialCapital: 10000000, // 1천만원 기본값
+    monthlyDividend: 300000,  // 30만원 기본값
+    targetAmount: 100000000   // 1억원 기본값
   });
   
   // 재투자율 시나리오 (사용자 조절 가능)
@@ -45,6 +46,8 @@ const DividendApp: React.FC = () => {
   // 커스텀 훅 사용
   const { searchResults, isSearching, searchStock, clearResults } = useStockSearch();
   const { simulationResults, isValidSimulation } = useSimulation(simulationInputs, scenarios);
+  const { savePortfolioData, loadPortfolioData, clearPortfolioData, hasSavedData } = usePortfolioStorage();
+  
 
   // 계산된 값들
   const totalValue = useMemo(() => {
@@ -59,6 +62,24 @@ const DividendApp: React.FC = () => {
   }, [holdings]);
 
   const monthlyDividend = totalAnnualDividend / 12;
+
+  // 컴포넌트 마운트 시 저장된 데이터 불러오기
+  useEffect(() => {
+    const savedData = loadPortfolioData();
+    if (savedData.holdings.length > 0) {
+      setHoldings(savedData.holdings);
+    }
+    if (savedData.inputs.initialCapital > 0 || savedData.inputs.monthlyDividend > 0 || savedData.inputs.targetAmount > 0) {
+      setSimulationInputs(savedData.inputs);
+    }
+  }, []);
+
+  // 데이터 변경 시 자동 저장
+  useEffect(() => {
+    if (holdings.length > 0 || simulationInputs.initialCapital > 0) {
+      savePortfolioData(holdings, simulationInputs);
+    }
+  }, [holdings, simulationInputs]);
 
 
   // 월별 배당금 데이터 (실제 보유종목 기반)
@@ -137,7 +158,7 @@ const DividendApp: React.FC = () => {
   return (
     <div style={{ 
       minHeight: '100vh', 
-      background: '#111111',
+      background: '#1a1a1a',
       padding: isMobileView ? '40px 16px 20px 16px' : '60px 20px 20px 20px',
       fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
       position: 'relative'
@@ -258,7 +279,7 @@ const DividendApp: React.FC = () => {
             </div>
             <h1 style={{ 
               color: '#fff', 
-              fontSize: 28, 
+              fontSize: isMobileView ? 20 : 28, 
               fontWeight: 700, 
               margin: 0,
               letterSpacing: '2px'
@@ -268,7 +289,7 @@ const DividendApp: React.FC = () => {
           </div>
           <p style={{ 
             color: '#4a90e2', 
-            fontSize: 20, 
+            fontSize: isMobileView ? 16 : 20, 
             margin: 0, 
             fontWeight: 600,
             letterSpacing: '0.5px'
@@ -338,6 +359,58 @@ const DividendApp: React.FC = () => {
         {/* 포트폴리오 탭 */}
         {activeTab === 'portfolio' && (
           <div>
+            {/* 데이터 관리 영역 */}
+            {hasSavedData && (
+              <div style={{
+                background: '#1a1a1a',
+                borderRadius: 8,
+                padding: 16,
+                marginBottom: 20,
+                border: '1px solid #3a3a3a',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: '#50c878', fontSize: 14 }}>💾</span>
+                  <span style={{ color: '#50c878', fontSize: 14 }}>
+                    저장된 포트폴리오 데이터가 있습니다
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    if (confirm('저장된 모든 데이터를 삭제하시겠습니까?')) {
+                      clearPortfolioData();
+                      setHoldings([]);
+                      setSimulationInputs({
+                        initialCapital: 0,
+                        monthlyDividend: 0,
+                        targetAmount: 0
+                      });
+                    }
+                  }}
+                  style={{
+                    background: '#dc3545',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 4,
+                    padding: '6px 12px',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#c82333';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#dc3545';
+                  }}
+                >
+                  데이터 초기화
+                </button>
+              </div>
+            )}
+            
             {/* 요약 카드들 */}
             <div style={{ 
               display: 'grid', 
@@ -390,7 +463,7 @@ const DividendApp: React.FC = () => {
             <div style={{ 
               background: '#1a1a1a', 
               borderRadius: 8, 
-              padding: 16,
+              padding: 20,
               marginBottom: 16,
               border: '1px solid #3a3a3a'
             }}>
@@ -398,7 +471,7 @@ const DividendApp: React.FC = () => {
                 color: '#fff', 
                 fontSize: 16, 
                 fontWeight: 600, 
-                margin: '0 0 12px 0',
+                margin: '0 0 16px 0',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8
@@ -411,13 +484,14 @@ const DividendApp: React.FC = () => {
                 display: 'flex', 
                 alignItems: 'end', 
                 justifyContent: 'space-between',
-                height: 80,
-                marginBottom: 12,
+                height: 100,
+                marginBottom: 16,
+                marginTop: 8,
                 padding: '0 16px'
               }}>
                 {monthlyDividendData.map((data, i) => {
                   const maxAmount = Math.max(...monthlyDividendData.map(d => d.amount));
-                  const height = Math.max(15, (data.amount / maxAmount) * 65);
+                  const height = Math.max(15, (data.amount / maxAmount) * 80);
                   
                   return (
                     <div key={i} style={{ 
@@ -510,7 +584,7 @@ const DividendApp: React.FC = () => {
               {/* 종목 추가 폼 */}
               {showAddForm && (
                 <div style={{ 
-                  background: '#0d0d0d', 
+                      background: '#0a0a0a',
                   borderRadius: 8, 
                   padding: 16,
                   marginBottom: 16,
@@ -602,7 +676,10 @@ const DividendApp: React.FC = () => {
                               <div style={{ fontWeight: 600, color: '#4a9eff', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <span>{stock.symbol}</span>
                                 {(stock.isEtf || stock.quoteType === 'ETF' || stock.name?.includes('ETF')) && 
-                                  <span style={{ fontSize: 9, background: '#ff6600', color: '#fff', padding: '1px 4px', borderRadius: 2 }}>ETF</span>
+                                  <span style={{ fontSize: 10, background: '#00d4aa', color: '#fff', padding: '2px 6px', borderRadius: 3, fontWeight: 'bold' }}>🏛️ ETF</span>
+                                }
+                                {stock.isEstimated && 
+                                  <span style={{ fontSize: 9, background: '#ff9500', color: '#fff', padding: '1px 4px', borderRadius: 2 }}>추정</span>
                                 }
                                 {stock.exchange && <span style={{ fontSize: 9, background: '#666', color: '#fff', padding: '1px 4px', borderRadius: 2 }}>{stock.exchange}</span>}
                               </div>
@@ -612,10 +689,16 @@ const DividendApp: React.FC = () => {
                               </div>
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: '#4CAF50' }}>
-                                {stock.dividendYield}%
+                              <div style={{ 
+                                fontSize: 13, 
+                                fontWeight: 600, 
+                                color: (stock.isEtf || stock.quoteType === 'ETF') ? '#00d4aa' : '#4CAF50' 
+                              }}>
+                                {typeof stock.dividendYield === 'number' ? stock.dividendYield.toFixed(2) : stock.dividendYield}%
                               </div>
-                              <div style={{ fontSize: 9, color: '#888' }}>배당률</div>
+                              <div style={{ fontSize: 9, color: '#888' }}>
+                                {stock.isEstimated ? '추정 배당률' : '배당률'}
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -626,7 +709,7 @@ const DividendApp: React.FC = () => {
                   {/* 선택된 종목 정보 표시 */}
                   {newStock.name && (
                     <div style={{ 
-                      background: '#2a2a2a', 
+                      background: '#1a1a1a', 
                       padding: 12, 
                       borderRadius: 6, 
                       marginBottom: 12,
@@ -780,7 +863,7 @@ const DividendApp: React.FC = () => {
                     textAlign: 'center', 
                     padding: 40, 
                     color: '#888',
-                    background: '#0d0d0d',
+                      background: '#0a0a0a',
                     borderRadius: 8,
                     border: '1px solid #1a1a1a'
                   }}>
@@ -932,7 +1015,7 @@ const DividendApp: React.FC = () => {
                   <input
                     type="text"
                     placeholder="예: 10,000,000 (천만원)"
-                    value={simulationInputs.initialCapital > 0 ? formatNumber(simulationInputs.initialCapital) : ''}
+                    value={formatNumber(simulationInputs.initialCapital)}
                     onChange={(e) => setSimulationInputs({
                       ...simulationInputs, 
                       initialCapital: parseNumber(e.target.value)
@@ -956,7 +1039,7 @@ const DividendApp: React.FC = () => {
                   <input
                     type="text"
                     placeholder="예: 500,000 (50만원)"
-                    value={simulationInputs.monthlyDividend > 0 ? formatNumber(simulationInputs.monthlyDividend) : ''}
+                    value={formatNumber(simulationInputs.monthlyDividend)}
                     onChange={(e) => setSimulationInputs({
                       ...simulationInputs, 
                       monthlyDividend: parseNumber(e.target.value)
@@ -980,7 +1063,7 @@ const DividendApp: React.FC = () => {
                   <input
                     type="text"
                     placeholder="예: 100,000,000 (1억원)"
-                    value={simulationInputs.targetAmount > 0 ? formatNumber(simulationInputs.targetAmount) : ''}
+                    value={formatNumber(simulationInputs.targetAmount)}
                     onChange={(e) => setSimulationInputs({
                       ...simulationInputs, 
                       targetAmount: parseNumber(e.target.value)
@@ -1489,7 +1572,7 @@ const DividendApp: React.FC = () => {
               }}>
                 {/* 1. 원금 성장 추이 */}
                 <div style={{ 
-                  background: '#0d0d0d', 
+                      background: '#0a0a0a',
                   borderRadius: 8, 
                   padding: 20
                 }}>
@@ -1606,10 +1689,6 @@ const DividendApp: React.FC = () => {
                                   <div>🚀 증가분: ${formatNumber(point.capital - simulationInputs.initialCapital)}원</div>
                                 `;
                                 document.body.appendChild(tooltip);
-                                
-                                const rect = (e.target as HTMLElement).getBoundingClientRect();
-                                tooltip.style.left = rect.left + window.scrollX + 15 + 'px';
-                                tooltip.style.top = rect.top + window.scrollY - 15 + 'px';
                               }}
                               onMouseLeave={() => {
                                 const tooltip = document.getElementById('tooltip-capital-bar');
@@ -1678,6 +1757,7 @@ const DividendApp: React.FC = () => {
                                     const existingTooltip = document.getElementById('tooltip-capital-point');
                                     if (existingTooltip) existingTooltip.remove();
                                     
+                                    const rect = (e.target as SVGElement).getBoundingClientRect();
                                     const tooltip = document.createElement('div');
                                     tooltip.id = 'tooltip-capital-point';
                                     tooltip.style.cssText = `
@@ -1688,9 +1768,11 @@ const DividendApp: React.FC = () => {
                                       border-radius: 8px;
                                       font-size: 13px;
                                       pointer-events: none;
-                                      z-index: 1000;
+                                      z-index: 10000;
                                       border: 2px solid ${result.color};
                                       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                                      left: ${rect.left + window.scrollX + 15}px;
+                                      top: ${rect.top + window.scrollY - 15}px;
                                     `;
                                     tooltip.innerHTML = `
                                       <div style="color: ${result.color}; font-weight: bold; margin-bottom: 6px; font-size: 14px;">
@@ -1702,10 +1784,6 @@ const DividendApp: React.FC = () => {
                                       <div>🚀 증가분: ${formatNumber(point.capital - simulationInputs.initialCapital)}원</div>
                                     `;
                                     document.body.appendChild(tooltip);
-                                    
-                                    const rect = (e.target as HTMLElement).getBoundingClientRect();
-                                    tooltip.style.left = rect.left + window.scrollX + 15 + 'px';
-                                    tooltip.style.top = rect.top + window.scrollY - 15 + 'px';
                                   }}
                                   onMouseLeave={() => {
                                     const tooltip = document.getElementById('tooltip-capital-point');
@@ -1761,7 +1839,7 @@ const DividendApp: React.FC = () => {
 
                 {/* 2. 배당금 증가 추이 */}
                 <div style={{ 
-                  background: '#0d0d0d', 
+                      background: '#0a0a0a',
                   borderRadius: 8, 
                   padding: 20
                 }}>
@@ -1790,23 +1868,17 @@ const DividendApp: React.FC = () => {
                         />
                       ))}
                       
-                      {/* Y축 레이블 */}
-                      <text x="75" y="45" fontSize="11" fill="#666" textAnchor="end">
-                        {simulationInputs.monthlyDividend > 0 ? Math.round(simulationInputs.monthlyDividend * 3 / 10000) + '만' : '최대 배당금'}
-                      </text>
-                      <text x="75" y="105" fontSize="11" fill="#666" textAnchor="end">
-                        {simulationInputs.monthlyDividend > 0 ? Math.round(simulationInputs.monthlyDividend * 2.4 / 10000) + '만' : ''}
-                      </text>
-                      <text x="75" y="170" fontSize="11" fill="#666" textAnchor="end">
-                        {simulationInputs.monthlyDividend > 0 ? Math.round(simulationInputs.monthlyDividend * 1.8 / 10000) + '만' : ''}
-                      </text>
-                      <text x="75" y="235" fontSize="11" fill="#666" textAnchor="end">
-                        {simulationInputs.monthlyDividend > 0 ? Math.round(simulationInputs.monthlyDividend * 1.2 / 10000) + '만' : ''}
-                      </text>
-                      <text x="75" y="300" fontSize="11" fill="#666" textAnchor="end">
-                        {simulationInputs.monthlyDividend > 0 ? Math.round(simulationInputs.monthlyDividend * 0.6 / 10000) + '만' : ''}
-                      </text>
-                      <text x="75" y="365" fontSize="11" fill="#666" textAnchor="end">0</text>
+                      {/* Y축 레이블 (동적) */}
+                      {(() => {
+                        const maxDividend = Math.max(...simulationResults.flatMap(r => r.history || []).map(h => h.monthlyDividend));
+                        const displayMax = Math.max(maxDividend, simulationInputs.monthlyDividend);
+                        
+                        return [1, 0.8, 0.6, 0.4, 0.2, 0].map((ratio, idx) => (
+                          <text key={ratio} x="75" y={45 + idx * 64} fontSize="11" fill="#666" textAnchor="end">
+                            {Math.round(displayMax * ratio / 10000)}만
+                          </text>
+                        ));
+                      })()}
                       
                       {/* 막대 그래프 */}
                       {simulationResults.map((result, scenarioIdx) => {
@@ -1822,7 +1894,7 @@ const DividendApp: React.FC = () => {
                         
                         const filteredHistory = getFilteredHistory();
                         const barWidth = 15;
-                        const maxDividend = simulationInputs.monthlyDividend * 3;
+                        const maxDividend = Math.max(...simulationResults.flatMap(r => r.history || []).map(h => h.monthlyDividend));
                         
                         return filteredHistory.map((point, i) => {
                           const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1))) + (scenarioIdx * (barWidth + 2)) - (simulationResults.length * (barWidth + 2) / 2);
@@ -1879,10 +1951,6 @@ const DividendApp: React.FC = () => {
                                   <div>🚀 증가분: ${formatNumber(point.monthlyDividend - simulationInputs.monthlyDividend)}원</div>
                                 `;
                                 document.body.appendChild(tooltip);
-                                
-                                const rect = (e.target as HTMLElement).getBoundingClientRect();
-                                tooltip.style.left = rect.left + window.scrollX + 15 + 'px';
-                                tooltip.style.top = rect.top + window.scrollY - 15 + 'px';
                               }}
                               onMouseLeave={() => {
                                 const tooltip = document.getElementById('tooltip-dividend-bar');
@@ -1906,7 +1974,7 @@ const DividendApp: React.FC = () => {
                         };
                         
                         const filteredHistory = getFilteredHistory();
-                        const maxDividend = simulationInputs.monthlyDividend * 3;
+                        const maxDividend = Math.max(...simulationResults.flatMap(r => r.history || []).map(h => h.monthlyDividend));
                         const points = filteredHistory.map((point, i) => {
                           const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1)));
                           const progress = point.monthlyDividend / maxDividend;
@@ -1941,18 +2009,22 @@ const DividendApp: React.FC = () => {
                                     const existingTooltip = document.getElementById('tooltip-dividend-point');
                                     if (existingTooltip) existingTooltip.remove();
                                     
+                                    const rect = (e.target as SVGElement).getBoundingClientRect();
                                     const tooltip = document.createElement('div');
                                     tooltip.id = 'tooltip-dividend-point';
                                     tooltip.style.cssText = `
                                       position: fixed;
                                       background: rgba(0,0,0,0.9);
                                       color: white;
-                                      padding: 8px 12px;
-                                      border-radius: 6px;
-                                      font-size: 12px;
+                                      padding: 12px 16px;
+                                      border-radius: 8px;
+                                      font-size: 13px;
                                       pointer-events: none;
-                                      z-index: 1000;
-                                      border: 1px solid ${result.color};
+                                      z-index: 10000;
+                                      border: 2px solid ${result.color};
+                                      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                                      left: ${rect.left + window.scrollX + 15}px;
+                                      top: ${rect.top + window.scrollY - 15}px;
                                     `;
                                     
                                     const getPeriodLabel = () => {
@@ -1975,10 +2047,6 @@ const DividendApp: React.FC = () => {
                                       <div>📈 증가율: ${((point.monthlyDividend / simulationInputs.monthlyDividend - 1) * 100).toFixed(1)}%</div>
                                     `;
                                     document.body.appendChild(tooltip);
-                                    
-                                    const rect = (e.target as HTMLElement).getBoundingClientRect();
-                                    tooltip.style.left = rect.left + window.scrollX + 10 + 'px';
-                                    tooltip.style.top = rect.top + window.scrollY - 10 + 'px';
                                   }}
                                   onMouseLeave={() => {
                                     const tooltip = document.getElementById('tooltip-dividend-point');
@@ -2048,7 +2116,7 @@ const DividendApp: React.FC = () => {
 
                 {/* 3. 누적 투자 수익률 */}
                 <div style={{ 
-                  background: '#0d0d0d', 
+                      background: '#0a0a0a',
                   borderRadius: 8, 
                   padding: 20
                 }}>
@@ -2077,13 +2145,19 @@ const DividendApp: React.FC = () => {
                         />
                       ))}
                       
-                      {/* Y축 레이블 */}
-                      <text x="75" y="45" fontSize="11" fill="#666" textAnchor="end">1000%</text>
-                      <text x="75" y="105" fontSize="11" fill="#666" textAnchor="end">800%</text>
-                      <text x="75" y="170" fontSize="11" fill="#666" textAnchor="end">600%</text>
-                      <text x="75" y="235" fontSize="11" fill="#666" textAnchor="end">400%</text>
-                      <text x="75" y="300" fontSize="11" fill="#666" textAnchor="end">200%</text>
-                      <text x="75" y="365" fontSize="11" fill="#666" textAnchor="end">0%</text>
+                      {/* Y축 레이블 (동적) */}
+                      {(() => {
+                        const maxRate = Math.max(...simulationResults.flatMap(r => 
+                          (r.history || []).map(h => ((h.capital - simulationInputs.initialCapital) / simulationInputs.initialCapital) * 100)
+                        ));
+                        const displayMax = Math.max(maxRate, 100);
+                        
+                        return [1, 0.8, 0.6, 0.4, 0.2, 0].map((ratio, idx) => (
+                          <text key={ratio} x="75" y={45 + idx * 64} fontSize="11" fill="#666" textAnchor="end">
+                            {Math.round(displayMax * ratio)}%
+                          </text>
+                        ));
+                      })()}
                       
                       {/* 막대 그래프 */}
                       {simulationResults.map((result, scenarioIdx) => {
@@ -2100,10 +2174,15 @@ const DividendApp: React.FC = () => {
                         const filteredHistory = getFilteredHistory();
                         const barWidth = 15;
                         
+                        // 최대 수익률 계산 (동적 스케일링)
+                        const maxReturnRate = Math.max(...simulationResults.flatMap(r => 
+                          (r.history || []).map(h => ((h.capital - simulationInputs.initialCapital) / simulationInputs.initialCapital) * 100)
+                        ));
+                        
                         return filteredHistory.map((point, i) => {
                           const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1))) + (scenarioIdx * (barWidth + 2)) - (simulationResults.length * (barWidth + 2) / 2);
                           const returnRate = ((point.capital - simulationInputs.initialCapital) / simulationInputs.initialCapital) * 100;
-                          const progress = Math.min(returnRate / 1000, 1); // 최대 1000%로 제한
+                          const progress = Math.min(returnRate / Math.max(maxReturnRate, 100), 1); // 동적 스케일링
                           const barHeight = progress * 320;
                           
                           const getPeriodLabel = () => {
@@ -2156,10 +2235,6 @@ const DividendApp: React.FC = () => {
                                   <div>🚀 수익금: ${formatNumber(point.capital - simulationInputs.initialCapital)}원</div>
                                 `;
                                 document.body.appendChild(tooltip);
-                                
-                                const rect = (e.target as HTMLElement).getBoundingClientRect();
-                                tooltip.style.left = rect.left + window.scrollX + 15 + 'px';
-                                tooltip.style.top = rect.top + window.scrollY - 15 + 'px';
                               }}
                               onMouseLeave={() => {
                                 const tooltip = document.getElementById('tooltip-return-bar');
@@ -2183,10 +2258,16 @@ const DividendApp: React.FC = () => {
                         };
                         
                         const filteredHistory = getFilteredHistory();
+                        
+                        // 최대 수익률 계산 (동적 스케일링)
+                        const maxReturnRate = Math.max(...simulationResults.flatMap(r => 
+                          (r.history || []).map(h => ((h.capital - simulationInputs.initialCapital) / simulationInputs.initialCapital) * 100)
+                        ));
+                        
                         const points = filteredHistory.map((point, i) => {
                           const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1)));
                           const returnRate = ((point.capital - simulationInputs.initialCapital) / simulationInputs.initialCapital) * 100;
-                          const progress = Math.min(returnRate / 1000, 1); // 최대 1000%로 제한
+                          const progress = Math.min(returnRate / Math.max(maxReturnRate, 100), 1); // 동적 스케일링
                           const y = 360 - (progress * 320);
                           return `${x},${Math.max(40, y)}`;
                         }).join(' ');
@@ -2203,7 +2284,7 @@ const DividendApp: React.FC = () => {
                             {filteredHistory.map((point, i) => {
                               const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1)));
                               const returnRate = ((point.capital - simulationInputs.initialCapital) / simulationInputs.initialCapital) * 100;
-                              const progress = Math.min(returnRate / 1000, 1);
+                              const progress = Math.min(returnRate / Math.max(maxReturnRate, 100), 1);
                               const y = Math.max(40, 360 - (progress * 320));
                               
                               const getPeriodLabel = () => {
@@ -2230,18 +2311,20 @@ const DividendApp: React.FC = () => {
                                     const existingTooltip = document.getElementById('tooltip-return-point');
                                     if (existingTooltip) existingTooltip.remove();
                                     
+                                    const rect = (e.target as SVGElement).getBoundingClientRect();
                                     const tooltip = document.createElement('div');
                                     tooltip.id = 'tooltip-return-point';
                                     tooltip.style.cssText = `
                                       position: fixed;
                                       background: rgba(0,0,0,0.9);
                                       color: white;
-                                      padding: 8px 12px;
-                                      border-radius: 6px;
-                                      font-size: 12px;
+                                      padding: 12px 16px;
+                                      border-radius: 8px;
+                                      font-size: 13px;
                                       pointer-events: none;
-                                      z-index: 1000;
-                                      border: 1px solid ${result.color};
+                                      z-index: 10000;
+                                      border: 2px solid ${result.color};
+                                      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
                                     `;
                                     tooltip.innerHTML = `
                                       <div style="color: ${result.color}; font-weight: bold; margin-bottom: 4px;">
@@ -2253,10 +2336,6 @@ const DividendApp: React.FC = () => {
                                       <div>📈 수익: ${formatNumber(point.capital - simulationInputs.initialCapital)}원</div>
                                     `;
                                     document.body.appendChild(tooltip);
-                                    
-                                    const rect = (e.target as HTMLElement).getBoundingClientRect();
-                                    tooltip.style.left = rect.left + window.scrollX + 10 + 'px';
-                                    tooltip.style.top = rect.top + window.scrollY - 10 + 'px';
                                   }}
                                   onMouseLeave={() => {
                                     const tooltip = document.getElementById('tooltip-return-point');

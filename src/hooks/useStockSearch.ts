@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { localStockData } from '../data/constants';
-import { expandedStockDatabase, hybridStockSearch } from '../data/stockDatabase';
+import { expandedStockDatabase, hybridStockSearch, searchStockAPI } from '../data/stockDatabase';
 
 export const useStockSearch = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -14,47 +14,21 @@ export const useStockSearch = () => {
     
     setIsSearching(true);
     try {
-      console.log('API 우선 주식 검색 시작...');
+      console.log('API 전용 주식 검색 시작...');
       
-      // 1. API 검색을 먼저 시도
-      try {
-        const apiResults = await hybridStockSearch(query);
-        if (apiResults && apiResults.length > 0) {
-          console.log(`API 검색 결과: ${apiResults.length}개`);
-          setSearchResults(apiResults);
-          return;
-        }
-      } catch (apiError) {
-        console.error('API 검색 실패:', apiError);
+      // API만 사용 - 로컬 DB 사용 안함
+      const apiResults = await searchStockAPI(query);
+      if (apiResults && apiResults.length > 0) {
+        console.log(`API 검색 결과 (실제 배당률): ${apiResults.length}개`);
+        setSearchResults(apiResults);
+      } else {
+        console.log('API에서 검색 결과를 찾을 수 없습니다.');
+        setSearchResults([]);
       }
       
-      // 2. API 실패 시에만 로컬 DB 사용
-      console.log('API 실패, 로컬 DB 검색...');
-      const results = expandedStockDatabase.filter(stock => 
-        stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
-        stock.name.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 10);
-      
-      // 결과 필터링 및 정렬 (ETF 우선, 배당률 높은 순)
-      const sortedResults = results.sort((a, b) => {
-        // ETF를 먼저 표시
-        if (a.isEtf && !b.isEtf) return -1;
-        if (!a.isEtf && b.isEtf) return 1;
-        // 배당률 높은 순으로 정렬
-        return parseFloat(b.dividendYield.toString()) - parseFloat(a.dividendYield.toString());
-      });
-      
-      setSearchResults(sortedResults);
-      console.log(`로컬 DB 백업 결과: ${sortedResults.length}개`);
-      
     } catch (error) {
-      console.error('전체 검색 실패:', error);
-      // 최종 백업: 기존 로컬 데이터 사용
-      const backupStocks = localStockData.slice(0, 5);
-      setSearchResults(backupStocks.filter(stock => 
-        stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
-        stock.name.toLowerCase().includes(query.toLowerCase())
-      ));
+      console.error('API 검색 실패:', error);
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }

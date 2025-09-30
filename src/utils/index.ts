@@ -11,7 +11,7 @@ export const generateId = (): string => {
   return Math.random().toString(36).substr(2, 9);
 };
 
-// 목표 달성 계산 함수
+// 목표 달성 계산 함수 (개선된 버전)
 export const calculateMonthsToTarget = (
   initialCapital: number, 
   monthlyDividend: number, 
@@ -23,6 +23,9 @@ export const calculateMonthsToTarget = (
   let months = 0;
   const history = [];
   const maxMonths = 600; // 50년 제한
+  
+  // 연 배당률 계산 (월 배당금 * 12 / 초기 자본)
+  const annualDividendYield = (monthlyDividend * 12) / initialCapital;
   
   while (currentCapital < targetAmount && months < maxMonths) {
     months++;
@@ -36,18 +39,18 @@ export const calculateMonthsToTarget = (
     // 원금에 재투자 금액 추가
     currentCapital += reinvestAmount;
     
-    // 원금 증가에 따른 배당금 증가 (배당률 일정하다고 가정)
-    const dividendYieldRate = monthlyDividend / initialCapital;
-    currentMonthlyDividend = currentCapital * dividendYieldRate;
-    
-    // 히스토리 저장 (매 3개월마다)
+    // 배당금 증가 (더 현실적인 계산)
+    // 분기별로만 배당금 재계산 (매월 계산하면 너무 급격함)
     if (months % 3 === 0) {
-      history.push({
-        month: months,
-        capital: Math.round(currentCapital),
-        monthlyDividend: Math.round(currentMonthlyDividend)
-      });
+      currentMonthlyDividend = currentCapital * (annualDividendYield / 12);
     }
+    
+    // 히스토리 저장 (매월)
+    history.push({
+      month: months,
+      capital: Math.round(currentCapital),
+      monthlyDividend: Math.round(currentMonthlyDividend)
+    });
   }
   
   return {
