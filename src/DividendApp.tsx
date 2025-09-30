@@ -1600,6 +1600,17 @@ const DividendApp: React.FC = () => {
                           const progress = point.capital / simulationInputs.targetAmount;
                           const barHeight = progress * 320;
                           
+                          const getPeriodLabel = () => {
+                            const startDate = new Date();
+                            const targetDate = new Date(startDate);
+                            targetDate.setMonth(targetDate.getMonth() + point.month);
+                            
+                            const year = targetDate.getFullYear().toString().slice(-2);
+                            const month = targetDate.getMonth() + 1;
+                            
+                            return `${year}년 ${month}월`;
+                          };
+                          
                           return (
                             <rect
                               key={`bar-${scenarioIdx}-${i}`}
@@ -1608,8 +1619,42 @@ const DividendApp: React.FC = () => {
                               width={barWidth}
                               height={barHeight}
                               fill={result.color}
-                              fillOpacity="0.3"
                               rx="2"
+                              style={{ cursor: 'pointer' }}
+                              onMouseEnter={(e) => {
+                                const tooltip = document.createElement('div');
+                                tooltip.id = 'tooltip-capital-bar';
+                                tooltip.style.cssText = `
+                                  position: fixed;
+                                  background: rgba(0,0,0,0.9);
+                                  color: white;
+                                  padding: 12px 16px;
+                                  border-radius: 8px;
+                                  font-size: 13px;
+                                  pointer-events: none;
+                                  z-index: 1000;
+                                  border: 2px solid ${result.color};
+                                  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                                `;
+                                tooltip.innerHTML = `
+                                  <div style="color: ${result.color}; font-weight: bold; margin-bottom: 6px; font-size: 14px;">
+                                    시나리오 ${result.name} (${result.rate}% 재투자)
+                                  </div>
+                                  <div style="margin-bottom: 3px;">📅 ${getPeriodLabel()}</div>
+                                  <div style="margin-bottom: 3px;">💰 원금: ${formatNumber(point.capital)}원</div>
+                                  <div style="margin-bottom: 3px;">📈 목표 달성률: ${(progress * 100).toFixed(1)}%</div>
+                                  <div>🚀 증가분: ${formatNumber(point.capital - simulationInputs.initialCapital)}원</div>
+                                `;
+                                document.body.appendChild(tooltip);
+                                
+                                const rect = (e.target as HTMLElement).getBoundingClientRect();
+                                tooltip.style.left = rect.left + window.scrollX + 15 + 'px';
+                                tooltip.style.top = rect.top + window.scrollY - 15 + 'px';
+                              }}
+                              onMouseLeave={() => {
+                                const tooltip = document.getElementById('tooltip-capital-bar');
+                                if (tooltip) tooltip.remove();
+                              }}
                             />
                           );
                         });
@@ -1820,6 +1865,17 @@ const DividendApp: React.FC = () => {
                           const progress = point.monthlyDividend / maxDividend;
                           const barHeight = progress * 320;
                           
+                          const getPeriodLabel = () => {
+                            const startDate = new Date();
+                            const targetDate = new Date(startDate);
+                            targetDate.setMonth(targetDate.getMonth() + point.month);
+                            
+                            const year = targetDate.getFullYear().toString().slice(-2);
+                            const month = targetDate.getMonth() + 1;
+                            
+                            return `${year}년 ${month}월`;
+                          };
+                          
                           return (
                             <rect
                               key={`dividend-bar-${scenarioIdx}-${i}`}
@@ -1828,8 +1884,42 @@ const DividendApp: React.FC = () => {
                               width={barWidth}
                               height={barHeight}
                               fill={result.color}
-                              fillOpacity="0.3"
                               rx="2"
+                              style={{ cursor: 'pointer' }}
+                              onMouseEnter={(e) => {
+                                const tooltip = document.createElement('div');
+                                tooltip.id = 'tooltip-dividend-bar';
+                                tooltip.style.cssText = `
+                                  position: fixed;
+                                  background: rgba(0,0,0,0.9);
+                                  color: white;
+                                  padding: 12px 16px;
+                                  border-radius: 8px;
+                                  font-size: 13px;
+                                  pointer-events: none;
+                                  z-index: 1000;
+                                  border: 2px solid ${result.color};
+                                  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                                `;
+                                tooltip.innerHTML = `
+                                  <div style="color: ${result.color}; font-weight: bold; margin-bottom: 6px; font-size: 14px;">
+                                    시나리오 ${result.name} (${result.rate}% 재투자)
+                                  </div>
+                                  <div style="margin-bottom: 3px;">📅 ${getPeriodLabel()}</div>
+                                  <div style="margin-bottom: 3px;">💰 월 배당금: ${formatNumber(point.monthlyDividend)}원</div>
+                                  <div style="margin-bottom: 3px;">📈 초기 대비: ${((point.monthlyDividend / simulationInputs.monthlyDividend - 1) * 100).toFixed(1)}%</div>
+                                  <div>🚀 증가분: ${formatNumber(point.monthlyDividend - simulationInputs.monthlyDividend)}원</div>
+                                `;
+                                document.body.appendChild(tooltip);
+                                
+                                const rect = (e.target as HTMLElement).getBoundingClientRect();
+                                tooltip.style.left = rect.left + window.scrollX + 15 + 'px';
+                                tooltip.style.top = rect.top + window.scrollY - 15 + 'px';
+                              }}
+                              onMouseLeave={() => {
+                                const tooltip = document.getElementById('tooltip-dividend-bar');
+                                if (tooltip) tooltip.remove();
+                              }}
                             />
                           );
                         });
@@ -1930,6 +2020,44 @@ const DividendApp: React.FC = () => {
                           </g>
                         );
                       })}
+                      
+                      {/* X축 라벨 */}
+                      {simulationResults.length > 0 && simulationResults[0].history && (
+                        (() => {
+                          const getFilteredHistory = () => {
+                            const step = viewMode === 'monthly' ? 1 : 
+                                       viewMode === 'quarterly' ? 3 : 
+                                       viewMode === 'halfyearly' ? 6 : 12;
+                            return simulationResults[0].history.filter((_, i) => i % step === 0).slice(0, 20);
+                          };
+                          
+                          const filteredHistory = getFilteredHistory();
+                          return filteredHistory.map((point, i) => {
+                            if (i % 3 !== 0) return null; // 3개마다 표시
+                            
+                            const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1)));
+                            const startDate = new Date();
+                            const targetDate = new Date(startDate);
+                            targetDate.setMonth(targetDate.getMonth() + point.month);
+                            
+                            const year = targetDate.getFullYear().toString().slice(-2);
+                            const month = targetDate.getMonth() + 1;
+                            
+                            return (
+                              <text
+                                key={i}
+                                x={x}
+                                y={385}
+                                fontSize="10"
+                                fill="#888"
+                                textAnchor="middle"
+                              >
+                                {year}년 {month}월
+                              </text>
+                            );
+                          });
+                        })()
+                      )}
                     </svg>
                   </div>
                 </div>
@@ -1994,6 +2122,17 @@ const DividendApp: React.FC = () => {
                           const progress = Math.min(returnRate / 1000, 1); // 최대 1000%로 제한
                           const barHeight = progress * 320;
                           
+                          const getPeriodLabel = () => {
+                            const startDate = new Date();
+                            const targetDate = new Date(startDate);
+                            targetDate.setMonth(targetDate.getMonth() + point.month);
+                            
+                            const year = targetDate.getFullYear().toString().slice(-2);
+                            const month = targetDate.getMonth() + 1;
+                            
+                            return `${year}년 ${month}월`;
+                          };
+                          
                           return (
                             <rect
                               key={`return-bar-${scenarioIdx}-${i}`}
@@ -2002,8 +2141,42 @@ const DividendApp: React.FC = () => {
                               width={barWidth}
                               height={barHeight}
                               fill={result.color}
-                              fillOpacity="0.3"
                               rx="2"
+                              style={{ cursor: 'pointer' }}
+                              onMouseEnter={(e) => {
+                                const tooltip = document.createElement('div');
+                                tooltip.id = 'tooltip-return-bar';
+                                tooltip.style.cssText = `
+                                  position: fixed;
+                                  background: rgba(0,0,0,0.9);
+                                  color: white;
+                                  padding: 12px 16px;
+                                  border-radius: 8px;
+                                  font-size: 13px;
+                                  pointer-events: none;
+                                  z-index: 1000;
+                                  border: 2px solid ${result.color};
+                                  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                                `;
+                                tooltip.innerHTML = `
+                                  <div style="color: ${result.color}; font-weight: bold; margin-bottom: 6px; font-size: 14px;">
+                                    시나리오 ${result.name} (${result.rate}% 재투자)
+                                  </div>
+                                  <div style="margin-bottom: 3px;">📅 ${getPeriodLabel()}</div>
+                                  <div style="margin-bottom: 3px;">💰 원금: ${formatNumber(point.capital)}원</div>
+                                  <div style="margin-bottom: 3px;">📈 수익률: ${returnRate.toFixed(1)}%</div>
+                                  <div>🚀 수익금: ${formatNumber(point.capital - simulationInputs.initialCapital)}원</div>
+                                `;
+                                document.body.appendChild(tooltip);
+                                
+                                const rect = (e.target as HTMLElement).getBoundingClientRect();
+                                tooltip.style.left = rect.left + window.scrollX + 15 + 'px';
+                                tooltip.style.top = rect.top + window.scrollY - 15 + 'px';
+                              }}
+                              onMouseLeave={() => {
+                                const tooltip = document.getElementById('tooltip-return-bar');
+                                if (tooltip) tooltip.remove();
+                              }}
                             />
                           );
                         });
@@ -2117,6 +2290,44 @@ const DividendApp: React.FC = () => {
                           </g>
                         );
                       })}
+                      
+                      {/* X축 라벨 */}
+                      {simulationResults.length > 0 && simulationResults[0].history && (
+                        (() => {
+                          const getFilteredHistory = () => {
+                            const step = viewMode === 'monthly' ? 1 : 
+                                       viewMode === 'quarterly' ? 3 : 
+                                       viewMode === 'halfyearly' ? 6 : 12;
+                            return simulationResults[0].history.filter((_, i) => i % step === 0).slice(0, 20);
+                          };
+                          
+                          const filteredHistory = getFilteredHistory();
+                          return filteredHistory.map((point, i) => {
+                            if (i % 3 !== 0) return null; // 3개마다 표시
+                            
+                            const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1)));
+                            const startDate = new Date();
+                            const targetDate = new Date(startDate);
+                            targetDate.setMonth(targetDate.getMonth() + point.month);
+                            
+                            const year = targetDate.getFullYear().toString().slice(-2);
+                            const month = targetDate.getMonth() + 1;
+                            
+                            return (
+                              <text
+                                key={i}
+                                x={x}
+                                y={385}
+                                fontSize="10"
+                                fill="#888"
+                                textAnchor="middle"
+                              >
+                                {year}년 {month}월
+                              </text>
+                            );
+                          });
+                        })()
+                      )}
                     </svg>
                   </div>
                 </div>
