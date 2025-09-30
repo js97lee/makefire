@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 // 타입 정의
 interface DividendFrequency {
@@ -23,6 +23,33 @@ interface SimulationScenario {
   rate: number;
   color: string;
 }
+
+// AdSense 광고 컴포넌트
+const AdSenseAd = () => {
+  useEffect(() => {
+    try {
+      (window as any).adsbygoogle = (window as any).adsbygoogle || [];
+      (window as any).adsbygoogle.push({});
+    } catch (err) {
+      console.log('AdSense error:', err);
+    }
+  }, []);
+
+  return (
+    <div style={{ 
+      textAlign: 'center',
+      marginBottom: 32,
+      padding: '20px 0'
+    }}>
+      <ins className="adsbygoogle"
+           style={{ display: 'block' }}
+           data-ad-client="ca-pub-2772763439292423"
+           data-ad-slot="1380700398"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    </div>
+  );
+};
 
 // 유틸리티 함수들
 const formatNumber = (num: number): string => {
@@ -444,6 +471,9 @@ const DividendApp: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Google AdSense 광고 */}
+            <AdSenseAd />
 
             {/* 월별 배당금 차트 */}
             <div style={{ 
@@ -1466,6 +1496,9 @@ const DividendApp: React.FC = () => {
                   })}
                 </div>
               </div>
+
+              {/* Google AdSense 광고 */}
+              <AdSenseAd />
 
               {/* 보기 방식 선택 */}
               <div style={{ 
