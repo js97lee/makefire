@@ -1632,10 +1632,17 @@ const DividendApp: React.FC = () => {
                         };
                         
                         const filteredHistory = getFilteredHistory();
-                        const barWidth = 15;
+                        const barWidth = 12;
+                        const groupSpacing = 4; // 시나리오 간 간격
+                        const barSpacing = 1; // 막대 간 간격
                         
                         return filteredHistory.map((point, i) => {
-                          const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1))) + (scenarioIdx * (barWidth + 2)) - (simulationResults.length * (barWidth + 2) / 2);
+                          const groupWidth = simulationResults.length * (barWidth + barSpacing) - barSpacing;
+                          const totalWidth = 600;
+                          const availableWidth = totalWidth - (groupWidth * filteredHistory.length) - (groupSpacing * (filteredHistory.length - 1));
+                          const startX = 100 + (availableWidth / 2);
+                          
+                          const x = startX + (i * (groupWidth + groupSpacing)) + (scenarioIdx * (barWidth + barSpacing));
                           const progress = point.capital / simulationInputs.targetAmount;
                           const barHeight = progress * 320;
                           
@@ -1713,7 +1720,16 @@ const DividendApp: React.FC = () => {
                         
                         const filteredHistory = getFilteredHistory();
                         const points = filteredHistory.map((point, i) => {
-                          const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1)));
+                          // 막대 그래프와 동일한 X 좌표 계산
+                          const barWidth = 12;
+                          const groupSpacing = 4;
+                          const barSpacing = 1;
+                          const groupWidth = simulationResults.length * (barWidth + barSpacing) - barSpacing;
+                          const totalWidth = 600;
+                          const availableWidth = totalWidth - (groupWidth * filteredHistory.length) - (groupSpacing * (filteredHistory.length - 1));
+                          const startX = 100 + (availableWidth / 2);
+                          
+                          const x = startX + (i * (groupWidth + groupSpacing)) + (groupWidth / 2); // 그룹 중앙
                           const progress = point.capital / simulationInputs.targetAmount;
                           const y = 360 - (progress * 320);
                           return `${x},${Math.max(40, y)}`;
@@ -1729,7 +1745,16 @@ const DividendApp: React.FC = () => {
                             />
                             {/* 데이터 포인트들 */}
                             {filteredHistory.map((point, i) => {
-                              const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1)));
+                              // 막대 그래프와 동일한 X 좌표 계산
+                              const barWidth = 12;
+                              const groupSpacing = 4;
+                              const barSpacing = 1;
+                              const groupWidth = simulationResults.length * (barWidth + barSpacing) - barSpacing;
+                              const totalWidth = 600;
+                              const availableWidth = totalWidth - (groupWidth * filteredHistory.length) - (groupSpacing * (filteredHistory.length - 1));
+                              const startX = 100 + (availableWidth / 2);
+                              
+                              const x = startX + (i * (groupWidth + groupSpacing)) + (groupWidth / 2); // 그룹 중앙
                               const progress = point.capital / simulationInputs.targetAmount;
                               const y = Math.max(40, 360 - (progress * 320));
                               
@@ -1893,11 +1918,18 @@ const DividendApp: React.FC = () => {
                         };
                         
                         const filteredHistory = getFilteredHistory();
-                        const barWidth = 15;
+                        const barWidth = 12;
+                        const groupSpacing = 4; // 시나리오 간 간격
+                        const barSpacing = 1; // 막대 간 간격
                         const maxDividend = Math.max(...simulationResults.flatMap(r => r.history || []).map(h => h.monthlyDividend));
                         
                         return filteredHistory.map((point, i) => {
-                          const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1))) + (scenarioIdx * (barWidth + 2)) - (simulationResults.length * (barWidth + 2) / 2);
+                          const groupWidth = simulationResults.length * (barWidth + barSpacing) - barSpacing;
+                          const totalWidth = 600;
+                          const availableWidth = totalWidth - (groupWidth * filteredHistory.length) - (groupSpacing * (filteredHistory.length - 1));
+                          const startX = 100 + (availableWidth / 2);
+                          
+                          const x = startX + (i * (groupWidth + groupSpacing)) + (scenarioIdx * (barWidth + barSpacing));
                           const progress = point.monthlyDividend / maxDividend;
                           const barHeight = progress * 320;
                           
@@ -2172,7 +2204,9 @@ const DividendApp: React.FC = () => {
                         };
                         
                         const filteredHistory = getFilteredHistory();
-                        const barWidth = 15;
+                        const barWidth = 12;
+                        const groupSpacing = 4; // 시나리오 간 간격
+                        const barSpacing = 1; // 막대 간 간격
                         
                         // 최대 수익률 계산 (동적 스케일링)
                         const maxReturnRate = Math.max(...simulationResults.flatMap(r => 
@@ -2180,7 +2214,12 @@ const DividendApp: React.FC = () => {
                         ));
                         
                         return filteredHistory.map((point, i) => {
-                          const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1))) + (scenarioIdx * (barWidth + 2)) - (simulationResults.length * (barWidth + 2) / 2);
+                          const groupWidth = simulationResults.length * (barWidth + barSpacing) - barSpacing;
+                          const totalWidth = 600;
+                          const availableWidth = totalWidth - (groupWidth * filteredHistory.length) - (groupSpacing * (filteredHistory.length - 1));
+                          const startX = 100 + (availableWidth / 2);
+                          
+                          const x = startX + (i * (groupWidth + groupSpacing)) + (scenarioIdx * (barWidth + barSpacing));
                           const returnRate = ((point.capital - simulationInputs.initialCapital) / simulationInputs.initialCapital) * 100;
                           const progress = Math.min(returnRate / Math.max(maxReturnRate, 100), 1); // 동적 스케일링
                           const barHeight = progress * 320;
