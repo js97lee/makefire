@@ -1,122 +1,19 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { StockHolding, SimulationScenario, TabType, ViewMode, SimulationInputs } from './types';
+import { formatNumber, parseNumber, generateId, calculateMonthsToTarget, formatPeriodLabel, createTooltip, removeTooltip } from './utils';
+import { dividendFrequencies, localStockData, defaultScenarios } from './data/constants';
+import { useStockSearch } from './hooks/useStockSearch';
+import { useSimulation } from './hooks/useSimulation';
+import AdSenseAd from './components/AdSenseAd';
+import IntroTab from './components/IntroTab';
+import ContactSection from './components/ContactSection';
 
-// 타입 정의
-interface DividendFrequency {
-  id: string;
-  label: string;
-  multiplier: number;
-}
-
-interface StockHolding {
-  id: string;
-  symbol: string;
-  name: string;
-  shares: number;
-  price: number;
-  dividendYield: number;
-  frequency: string;
-  manualDividend?: number;
-}
-
-interface SimulationScenario {
-  name: string;
-  rate: number;
-  color: string;
-}
-
-// AdSense 광고 컴포넌트
-const AdSenseAd = () => {
-  useEffect(() => {
-    try {
-      (window as any).adsbygoogle = (window as any).adsbygoogle || [];
-      (window as any).adsbygoogle.push({});
-    } catch (err) {
-      console.log('AdSense error:', err);
-    }
-  }, []);
-
-  return (
-    <div style={{ 
-      textAlign: 'center',
-      marginBottom: 32,
-      padding: '20px 0'
-    }}>
-      <ins className="adsbygoogle"
-           style={{ display: 'block' }}
-           data-ad-client="ca-pub-2772763439292423"
-           data-ad-slot="1380700398"
-           data-ad-format="auto"
-           data-full-width-responsive="true"></ins>
-    </div>
-  );
-};
-
-// 유틸리티 함수들
-const formatNumber = (num: number): string => {
-  return new Intl.NumberFormat('ko-KR').format(Math.round(num));
-};
-
-const parseNumber = (str: string): number => {
-  return parseFloat(str.replace(/[^\d.-]/g, '')) || 0;
-};
-
-const generateId = (): string => {
-  return Math.random().toString(36).substr(2, 9);
-};
-
-// 목표 달성 계산 함수
-const calculateMonthsToTarget = (initialCapital: number, monthlyDividend: number, reinvestmentRate: number, targetAmount: number) => {
-  let currentCapital = initialCapital;
-  let currentMonthlyDividend = monthlyDividend;
-  let months = 0;
-  const history = [];
-  const maxMonths = 600; // 50년 제한
-  
-  while (currentCapital < targetAmount && months < maxMonths) {
-    months++;
-    
-    // 월 배당금 받기
-    const dividendReceived = currentMonthlyDividend;
-    
-    // 재투자할 금액 계산
-    const reinvestAmount = dividendReceived * (reinvestmentRate / 100);
-    
-    // 원금에 재투자 금액 추가
-    currentCapital += reinvestAmount;
-    
-    // 원금 증가에 따른 배당금 증가 (배당률 일정하다고 가정)
-    const dividendYieldRate = monthlyDividend / initialCapital;
-    currentMonthlyDividend = currentCapital * dividendYieldRate;
-    
-    // 히스토리 저장 (매 3개월마다)
-    if (months % 3 === 0) {
-      history.push({
-        month: months,
-        capital: Math.round(currentCapital),
-        monthlyDividend: Math.round(currentMonthlyDividend)
-      });
-    }
-  }
-  
-  return {
-    months,
-    finalCapital: currentCapital,
-    history
-  };
-};
-
-// 배당 빈도 옵션
-const dividendFrequencies: DividendFrequency[] = [
-  { id: 'monthly', label: '매월', multiplier: 12 },
-  { id: 'quarterly', label: '분기별', multiplier: 4 },
-  { id: 'semiannual', label: '반기별', multiplier: 2 },
-  { id: 'annual', label: '연간', multiplier: 1 }
-];
 
 const DividendApp: React.FC = () => {
   // 상태 관리
-  const [activeTab, setActiveTab] = useState('portfolio');
+  const [activeTab, setActiveTab] = useState<TabType>('intro');
   const [holdings, setHoldings] = useState<StockHolding[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
   
   // 새 주식 추가 폼 상태
   const [newStock, setNewStock] = useState({
@@ -129,27 +26,22 @@ const DividendApp: React.FC = () => {
     manualDividend: ''
   });
   
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  
   // 시뮬레이션 입력값
-  const [simulationInputs, setSimulationInputs] = useState({
+  const [simulationInputs, setSimulationInputs] = useState<SimulationInputs>({
     initialCapital: 0,
     monthlyDividend: 0,
     targetAmount: 0
   });
   
   // 재투자율 시나리오 (사용자 조절 가능)
-  const [scenarios, setScenarios] = useState([
-    { id: 'A', name: 'A', rate: 80, color: '#ff6600', active: true },
-    { id: 'B', name: 'B', rate: 50, color: '#4a90e2', active: true },
-    { id: 'C', name: 'C', rate: 30, color: '#50c878', active: false },
-    { id: 'D', name: 'D', rate: 20, color: '#9b59b6', active: false }
-  ]);
+  const [scenarios, setScenarios] = useState<SimulationScenario[]>(defaultScenarios);
 
   // 보기 방식 상태
-  const [viewMode, setViewMode] = useState<'monthly' | 'quarterly' | 'halfyearly' | 'yearly'>('quarterly');
+  const [viewMode, setViewMode] = useState<ViewMode>('quarterly');
+
+  // 커스텀 훅 사용
+  const { searchResults, isSearching, searchStock, clearResults } = useStockSearch();
+  const { simulationResults, isValidSimulation } = useSimulation(simulationInputs, scenarios);
 
   // 계산된 값들
   const totalValue = useMemo(() => {
@@ -165,30 +57,6 @@ const DividendApp: React.FC = () => {
 
   const monthlyDividend = totalAnnualDividend / 12;
 
-  // 시뮬레이션 계산 결과
-  const simulationResults = useMemo(() => {
-    return scenarios.filter(s => s.active).map(scenario => {
-      const result = calculateMonthsToTarget(
-        simulationInputs.initialCapital,
-        simulationInputs.monthlyDividend,
-        scenario.rate,
-        simulationInputs.targetAmount
-      );
-      
-      const years = Math.floor(result.months / 12);
-      const months = result.months % 12;
-      
-      return {
-        ...scenario,
-        months: result.months,
-        years,
-        remainingMonths: months,
-        history: result.history,
-        finalCapital: result.finalCapital,
-        displayText: `${years}년 ${months}개월`
-      };
-    });
-  }, [simulationInputs, scenarios]);
 
   // 월별 배당금 데이터 (실제 보유종목 기반)
   const monthlyDividendData = useMemo(() => {
@@ -231,106 +99,6 @@ const DividendApp: React.FC = () => {
     setHoldings(holdings.filter(h => h.id !== id));
   };
 
-  // 실시간 주식/ETF 검색 함수 (다중 API)
-  const searchStock = async (query: string) => {
-    if (!query || query.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-    
-    setIsSearching(true);
-    try {
-      let results: any[] = [];
-      
-      // 1단계: 로컬 데이터 우선 사용 (CORS 에러 방지)
-      console.log('주식 검색 시작...');
-      
-      // 바로 로컬 데이터 사용 (더 안정적)
-      const localStocks = [
-        // 주요 개별 주식
-        { symbol: 'AAPL', name: 'Apple Inc.', price: 175.50, dividendYield: 0.50, isEtf: false },
-        { symbol: 'MSFT', name: 'Microsoft Corporation', price: 335.20, dividendYield: 0.72, isEtf: false },
-        { symbol: 'KO', name: 'The Coca-Cola Company', price: 58.90, dividendYield: 3.15, isEtf: false },
-        { symbol: 'JNJ', name: 'Johnson & Johnson', price: 160.80, dividendYield: 2.98, isEtf: false },
-        { symbol: 'PG', name: 'Procter & Gamble Co.', price: 152.30, dividendYield: 2.45, isEtf: false },
-        { symbol: 'PFE', name: 'Pfizer Inc.', price: 28.90, dividendYield: 5.85, isEtf: false },
-        { symbol: 'T', name: 'AT&T Inc.', price: 15.25, dividendYield: 7.20, isEtf: false },
-        { symbol: 'VZ', name: 'Verizon Communications Inc.', price: 38.50, dividendYield: 6.95, isEtf: false },
-        
-        // 월배당 ETF (인기 종목들)
-        { symbol: 'JEPI', name: 'JPMorgan Equity Premium Income ETF', price: 58.40, dividendYield: 7.72, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'JEPQ', name: 'JPMorgan Nasdaq Equity Premium Income ETF', price: 52.80, dividendYield: 9.35, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'QYLD', name: 'Global X NASDAQ 100 Covered Call ETF', price: 17.45, dividendYield: 12.08, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'XYLD', name: 'Global X S&P 500 Covered Call ETF', price: 45.20, dividendYield: 10.15, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'RYLD', name: 'Global X Russell 2000 Covered Call ETF', price: 14.85, dividendYield: 11.25, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'DIVO', name: 'Amplify CWP Enhanced Dividend Income ETF', price: 37.90, dividendYield: 5.12, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'NUSI', name: 'Nationwide Risk-Managed Income ETF', price: 19.75, dividendYield: 7.35, isEtf: true, quoteType: 'ETF' },
-        
-        // 고배당 ETF
-        { symbol: 'SCHD', name: 'Schwab US Dividend Equity ETF', price: 78.50, dividendYield: 3.47, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'VYM', name: 'Vanguard High Dividend Yield ETF', price: 112.30, dividendYield: 2.91, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'HDV', name: 'iShares Core High Dividend ETF', price: 108.60, dividendYield: 3.15, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'DGRO', name: 'iShares Core Dividend Growth ETF', price: 52.40, dividendYield: 2.08, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'NOBL', name: 'ProShares S&P 500 Dividend Aristocrats ETF', price: 95.30, dividendYield: 1.85, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'DVY', name: 'iShares Select Dividend ETF', price: 125.80, dividendYield: 3.25, isEtf: true, quoteType: 'ETF' },
-        
-        // 부동산 리츠 ETF
-        { symbol: 'VNQ', name: 'Vanguard Real Estate Index Fund ETF', price: 87.20, dividendYield: 3.68, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'SRET', name: 'Global X SuperDividend REIT ETF', price: 8.45, dividendYield: 8.92, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'MORT', name: 'VanEck Mortgage REIT Income ETF', price: 16.30, dividendYield: 9.15, isEtf: true, quoteType: 'ETF' },
-        
-        // 국제 배당 ETF
-        { symbol: 'VXUS', name: 'Vanguard Total International Stock ETF', price: 58.90, dividendYield: 3.12, isEtf: true, quoteType: 'ETF' },
-        { symbol: 'VYMI', name: 'Vanguard International High Dividend Yield ETF', price: 63.40, dividendYield: 4.25, isEtf: true, quoteType: 'ETF' },
-        
-        // 한국 주식
-        { symbol: '005930.KS', name: '삼성전자', price: 71000, dividendYield: 2.1, isEtf: false },
-        { symbol: '000660.KS', name: 'SK하이닉스', price: 123000, dividendYield: 1.2, isEtf: false },
-        { symbol: '035720.KS', name: '카카오', price: 45500, dividendYield: 0.8, isEtf: false }
-      ];
-      
-      results = localStocks.filter(stock => 
-        stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
-        stock.name.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 10);
-      
-      console.log(`로컬 검색 결과: ${results.length}개`);
-      
-      // API 호출은 생략하고 로컬 데이터만 사용 (CORS 에러 방지)
-      console.log('안정적인 로컬 검색 사용');
-      
-      // 결과 필터링 및 정렬 (ETF 우선, 배당률 높은 순)
-      const sortedResults = results.sort((a, b) => {
-        // ETF를 먼저 표시
-        if (a.isEtf && !b.isEtf) return -1;
-        if (!a.isEtf && b.isEtf) return 1;
-        // 배당률 높은 순으로 정렬
-        return parseFloat(b.dividendYield) - parseFloat(a.dividendYield);
-      });
-      
-      setSearchResults(sortedResults);
-      console.log(`최종 검색 결과: ${sortedResults.length}개`);
-    } catch (error) {
-      console.error('주식 검색 실패:', error);
-      // 에러 시 로컬 백업 데이터 사용
-      const backupStocks = [
-        { symbol: 'AAPL', name: 'Apple Inc.', price: 175.50, dividendYield: 0.50 },
-        { symbol: 'MSFT', name: 'Microsoft Corporation', price: 335.20, dividendYield: 0.72 },
-        { symbol: 'KO', name: 'The Coca-Cola Company', price: 58.90, dividendYield: 3.15 },
-        { symbol: 'JEPI', name: 'JPMorgan Equity Premium Income ETF', price: 58.40, dividendYield: 7.72 },
-        { symbol: 'JEPQ', name: 'JPMorgan Nasdaq Equity Premium Income ETF', price: 52.80, dividendYield: 9.35 },
-        { symbol: 'QYLD', name: 'Global X NASDAQ 100 Covered Call ETF', price: 17.45, dividendYield: 12.08 },
-        { symbol: 'SCHD', name: 'Schwab US Dividend Equity ETF', price: 78.50, dividendYield: 3.47 },
-        { symbol: 'VYM', name: 'Vanguard High Dividend Yield ETF', price: 112.30, dividendYield: 2.91 }
-      ];
-      setSearchResults(backupStocks.filter(stock => 
-        stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
-        stock.name.toLowerCase().includes(query.toLowerCase())
-      ));
-    } finally {
-      setIsSearching(false);
-    }
-  };
 
   // 검색 결과에서 주식 선택
   const selectStock = (stock: any) => {
@@ -341,7 +109,7 @@ const DividendApp: React.FC = () => {
       price: stock.price.toString(),
       dividendYield: stock.dividendYield.toString()
     });
-    setSearchResults([]);
+    clearResults();
   };
 
   // 시나리오 관리 함수들
@@ -373,16 +141,54 @@ const DividendApp: React.FC = () => {
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         {/* 헤더 */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h1 style={{ 
-            color: '#fff', 
-            fontSize: 24, 
-            fontWeight: 600, 
-            margin: '0 0 8px 0' 
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: 16, 
+            marginBottom: 12 
           }}>
-            배당 플래너
-          </h1>
-          <p style={{ color: '#888', fontSize: 14, margin: 0 }}>
-            배당주 재투자를 통한 복리 효과 시뮬레이션
+            <div style={{
+              background: 'linear-gradient(135deg, #4a90e2, #357abd)',
+              borderRadius: 12,
+              padding: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{
+                width: 24,
+                height: 24,
+                background: '#fff',
+                borderRadius: 4,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 14,
+                fontWeight: 'bold',
+                color: '#4a90e2'
+              }}>
+                📊
+              </div>
+            </div>
+            <h1 style={{ 
+              color: '#fff', 
+              fontSize: 28, 
+              fontWeight: 700, 
+              margin: 0,
+              letterSpacing: '2px'
+            }}>
+              DIVE : Dive in Dividend
+            </h1>
+          </div>
+          <p style={{ 
+            color: '#4a90e2', 
+            fontSize: 20, 
+            margin: 0, 
+            fontWeight: 600,
+            letterSpacing: '0.5px'
+          }}>
+            배당 재투자를 위한 플래너, 다이브
           </p>
         </div>
 
@@ -397,12 +203,13 @@ const DividendApp: React.FC = () => {
           border: '1px solid #3a3a3a'
         }}>
           {[
+            { id: 'intro', label: '🌟 소개' },
             { id: 'portfolio', label: '📊 포트폴리오' },
             { id: 'simulation', label: '🎯 목표 시뮬레이터' }
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => setActiveTab(tab.id as TabType)}
               style={{
                 flex: 1,
                 padding: '8px 16px',
@@ -410,8 +217,8 @@ const DividendApp: React.FC = () => {
                 borderRadius: 4,
                 background: activeTab === tab.id ? '#4a90e2' : 'transparent',
                 color: activeTab === tab.id ? '#fff' : '#aaa',
-                fontSize: 13,
-                fontWeight: 500,
+                fontSize: 16,
+                fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
@@ -420,6 +227,9 @@ const DividendApp: React.FC = () => {
             </button>
           ))}
         </div>
+
+        {/* 소개 탭 */}
+        {activeTab === 'intro' && <IntroTab setActiveTab={setActiveTab} />}
 
         {/* 포트폴리오 탭 */}
         {activeTab === 'portfolio' && (
@@ -479,15 +289,15 @@ const DividendApp: React.FC = () => {
             <div style={{ 
               background: '#1a1a1a', 
               borderRadius: 8, 
-              padding: 20,
-              marginBottom: 20,
+              padding: 16,
+              marginBottom: 16,
               border: '1px solid #3a3a3a'
             }}>
               <h3 style={{ 
                 color: '#fff', 
                 fontSize: 16, 
                 fontWeight: 600, 
-                margin: '0 0 20px 0',
+                margin: '0 0 12px 0',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8
@@ -500,13 +310,13 @@ const DividendApp: React.FC = () => {
                 display: 'flex', 
                 alignItems: 'end', 
                 justifyContent: 'space-between',
-                height: 120,
-                marginBottom: 16,
-                padding: '0 20px'
+                height: 80,
+                marginBottom: 12,
+                padding: '0 16px'
               }}>
                 {monthlyDividendData.map((data, i) => {
                   const maxAmount = Math.max(...monthlyDividendData.map(d => d.amount));
-                  const height = Math.max(20, (data.amount / maxAmount) * 100);
+                  const height = Math.max(15, (data.amount / maxAmount) * 65);
                   
                   return (
                     <div key={i} style={{ 
@@ -526,8 +336,8 @@ const DividendApp: React.FC = () => {
                     >
                       <div style={{ 
                         color: '#888', 
-                        fontSize: 10, 
-                        marginBottom: 4 
+                        fontSize: 9, 
+                        marginBottom: 3 
                       }}>
                         {Math.round(data.amount / 10000)}만
                       </div>
@@ -536,13 +346,13 @@ const DividendApp: React.FC = () => {
                         height: height,
                         background: '#4a9eff',
                         borderRadius: '2px 2px 0 0',
-                        minHeight: 20,
+                        minHeight: 15,
                         transition: 'all 0.2s ease'
                       }} />
                       <div style={{ 
                         color: '#888', 
-                        fontSize: 12, 
-                        marginTop: 8 
+                        fontSize: 10, 
+                        marginTop: 6 
                       }}>
                         {data.month}월
                       </div>
@@ -960,6 +770,9 @@ const DividendApp: React.FC = () => {
                 })}
               </div>
             </div>
+            
+            {/* 문의하기 섹션 */}
+            <ContactSection />
           </div>
         )}
 
@@ -2402,6 +2215,9 @@ const DividendApp: React.FC = () => {
                 </div>
               </div>
             </div>
+            
+            {/* 문의하기 섹션 */}
+            <ContactSection />
           </div>
         )}
       </div>
