@@ -1622,6 +1622,10 @@ const DividendApp: React.FC = () => {
                               rx="2"
                               style={{ cursor: 'pointer' }}
                               onMouseEnter={(e) => {
+                                // 기존 툴팁 제거
+                                const existingTooltip = document.getElementById('tooltip-capital-bar');
+                                if (existingTooltip) existingTooltip.remove();
+                                
                                 const tooltip = document.createElement('div');
                                 tooltip.id = 'tooltip-capital-bar';
                                 tooltip.style.cssText = `
@@ -1714,8 +1718,12 @@ const DividendApp: React.FC = () => {
                                   fill={result.color}
                                   style={{ cursor: 'pointer' }}
                                   onMouseEnter={(e) => {
+                                    // 기존 툴팁 제거
+                                    const existingTooltip = document.getElementById('tooltip-capital-point');
+                                    if (existingTooltip) existingTooltip.remove();
+                                    
                                     const tooltip = document.createElement('div');
-                                    tooltip.id = 'tooltip-capital';
+                                    tooltip.id = 'tooltip-capital-point';
                                     tooltip.style.cssText = `
                                       position: fixed;
                                       background: rgba(0,0,0,0.9);
@@ -1744,7 +1752,7 @@ const DividendApp: React.FC = () => {
                                     tooltip.style.top = rect.top + window.scrollY - 15 + 'px';
                                   }}
                                   onMouseLeave={() => {
-                                    const tooltip = document.getElementById('tooltip-capital');
+                                    const tooltip = document.getElementById('tooltip-capital-point');
                                     if (tooltip) tooltip.remove();
                                   }}
                                 />
@@ -1887,6 +1895,10 @@ const DividendApp: React.FC = () => {
                               rx="2"
                               style={{ cursor: 'pointer' }}
                               onMouseEnter={(e) => {
+                                // 기존 툴팁 제거
+                                const existingTooltip = document.getElementById('tooltip-dividend-bar');
+                                if (existingTooltip) existingTooltip.remove();
+                                
                                 const tooltip = document.createElement('div');
                                 tooltip.id = 'tooltip-dividend-bar';
                                 tooltip.style.cssText = `
@@ -1969,8 +1981,12 @@ const DividendApp: React.FC = () => {
                                   fill={result.color}
                                   style={{ cursor: 'pointer' }}
                                   onMouseEnter={(e) => {
+                                    // 기존 툴팁 제거
+                                    const existingTooltip = document.getElementById('tooltip-dividend-point');
+                                    if (existingTooltip) existingTooltip.remove();
+                                    
                                     const tooltip = document.createElement('div');
-                                    tooltip.id = 'tooltip-dividend';
+                                    tooltip.id = 'tooltip-dividend-point';
                                     tooltip.style.cssText = `
                                       position: fixed;
                                       background: rgba(0,0,0,0.9);
@@ -1982,11 +1998,23 @@ const DividendApp: React.FC = () => {
                                       z-index: 1000;
                                       border: 1px solid ${result.color};
                                     `;
+                                    
+                                    const getPeriodLabel = () => {
+                                      const startDate = new Date();
+                                      const targetDate = new Date(startDate);
+                                      targetDate.setMonth(targetDate.getMonth() + point.month);
+                                      
+                                      const year = targetDate.getFullYear().toString().slice(-2);
+                                      const month = targetDate.getMonth() + 1;
+                                      
+                                      return `${year}년 ${month}월`;
+                                    };
+                                    
                                     tooltip.innerHTML = `
                                       <div style="color: ${result.color}; font-weight: bold; margin-bottom: 4px;">
                                         시나리오 ${result.name} (${result.rate}%)
                                       </div>
-                                      <div>📅 ${Math.floor(point.month / 3)}분기</div>
+                                      <div>📅 ${getPeriodLabel()}</div>
                                       <div>💰 월배당금: ${formatNumber(point.monthlyDividend)}원</div>
                                       <div>📈 증가율: ${((point.monthlyDividend / simulationInputs.monthlyDividend - 1) * 100).toFixed(1)}%</div>
                                     `;
@@ -1997,7 +2025,7 @@ const DividendApp: React.FC = () => {
                                     tooltip.style.top = rect.top + window.scrollY - 10 + 'px';
                                   }}
                                   onMouseLeave={() => {
-                                    const tooltip = document.getElementById('tooltip-dividend');
+                                    const tooltip = document.getElementById('tooltip-dividend-point');
                                     if (tooltip) tooltip.remove();
                                   }}
                                 />
@@ -2144,6 +2172,10 @@ const DividendApp: React.FC = () => {
                               rx="2"
                               style={{ cursor: 'pointer' }}
                               onMouseEnter={(e) => {
+                                // 기존 툴팁 제거
+                                const existingTooltip = document.getElementById('tooltip-return-bar');
+                                if (existingTooltip) existingTooltip.remove();
+                                
                                 const tooltip = document.createElement('div');
                                 tooltip.id = 'tooltip-return-bar';
                                 tooltip.style.cssText = `
@@ -2238,8 +2270,12 @@ const DividendApp: React.FC = () => {
                                   fill={result.color}
                                   style={{ cursor: 'pointer' }}
                                   onMouseEnter={(e) => {
+                                    // 기존 툴팁 제거
+                                    const existingTooltip = document.getElementById('tooltip-return-point');
+                                    if (existingTooltip) existingTooltip.remove();
+                                    
                                     const tooltip = document.createElement('div');
-                                    tooltip.id = 'tooltip-return';
+                                    tooltip.id = 'tooltip-return-point';
                                     tooltip.style.cssText = `
                                       position: fixed;
                                       background: rgba(0,0,0,0.9);
@@ -2255,7 +2291,7 @@ const DividendApp: React.FC = () => {
                                       <div style="color: ${result.color}; font-weight: bold; margin-bottom: 4px;">
                                         시나리오 ${result.name} (${result.rate}%)
                                       </div>
-                                      <div>📅 ${Math.floor(point.month / 3)}분기</div>
+                                      <div>📅 ${getPeriodLabel()}</div>
                                       <div>💰 원금: ${formatNumber(point.capital)}원</div>
                                       <div>🚀 수익률: ${returnRate.toFixed(1)}%</div>
                                       <div>📈 수익: ${formatNumber(point.capital - simulationInputs.initialCapital)}원</div>
@@ -2267,7 +2303,7 @@ const DividendApp: React.FC = () => {
                                     tooltip.style.top = rect.top + window.scrollY - 10 + 'px';
                                   }}
                                   onMouseLeave={() => {
-                                    const tooltip = document.getElementById('tooltip-return');
+                                    const tooltip = document.getElementById('tooltip-return-point');
                                     if (tooltip) tooltip.remove();
                                   }}
                                 />
