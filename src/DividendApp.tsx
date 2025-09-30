@@ -269,11 +269,8 @@ const DividendApp: React.FC = () => {
       
       console.log(`로컬 검색 결과: ${results.length}개`);
       
-        // API 호출은 생략하고 로컬 데이터만 사용 (CORS 에러 방지)
-        console.log('안정적인 로컬 검색 사용');
-      } catch (apiError) {
-        console.log('API 에러 무시하고 로컬 데이터 사용:', apiError);
-      }
+      // API 호출은 생략하고 로컬 데이터만 사용 (CORS 에러 방지)
+      console.log('안정적인 로컬 검색 사용');
       
       // 결과 필터링 및 정렬 (ETF 우선, 배당률 높은 순)
       const sortedResults = results.sort((a, b) => {
@@ -1802,16 +1799,61 @@ const DividendApp: React.FC = () => {
                       </text>
                       <text x="75" y="365" fontSize="11" fill="#666" textAnchor="end">0</text>
                       
+                      {/* 막대 그래프 */}
+                      {simulationResults.map((result, scenarioIdx) => {
+                        if (!result.history || result.history.length === 0) return null;
+                        
+                        // 보기 방식에 따른 데이터 필터링
+                        const getFilteredHistory = () => {
+                          const step = viewMode === 'monthly' ? 1 : 
+                                     viewMode === 'quarterly' ? 3 : 
+                                     viewMode === 'halfyearly' ? 6 : 12;
+                          return result.history.filter((_, i) => i % step === 0).slice(0, 20);
+                        };
+                        
+                        const filteredHistory = getFilteredHistory();
+                        const barWidth = 15;
+                        const maxDividend = simulationInputs.monthlyDividend * 3;
+                        
+                        return filteredHistory.map((point, i) => {
+                          const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1))) + (scenarioIdx * (barWidth + 2)) - (simulationResults.length * (barWidth + 2) / 2);
+                          const progress = point.monthlyDividend / maxDividend;
+                          const barHeight = progress * 320;
+                          
+                          return (
+                            <rect
+                              key={`dividend-bar-${scenarioIdx}-${i}`}
+                              x={x}
+                              y={360 - barHeight}
+                              width={barWidth}
+                              height={barHeight}
+                              fill={result.color}
+                              fillOpacity="0.3"
+                              rx="2"
+                            />
+                          );
+                        });
+                      })}
+                      
                       {/* 배당금 증가 곡선들 */}
                       {simulationResults.map((result, idx) => {
                         if (!result.history || result.history.length === 0) return null;
                         
+                        // 보기 방식에 따른 데이터 필터링
+                        const getFilteredHistory = () => {
+                          const step = viewMode === 'monthly' ? 1 : 
+                                     viewMode === 'quarterly' ? 3 : 
+                                     viewMode === 'halfyearly' ? 6 : 12;
+                          return result.history.filter((_, i) => i % step === 0).slice(0, 20);
+                        };
+                        
+                        const filteredHistory = getFilteredHistory();
                         const maxDividend = simulationInputs.monthlyDividend * 3;
-                        const points = result.history.slice(0, 12).map((point, i) => {
-                          const x = 50 + (i * 25);
+                        const points = filteredHistory.map((point, i) => {
+                          const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1)));
                           const progress = point.monthlyDividend / maxDividend;
-                          const y = 170 - (progress * 150);
-                          return `${x},${Math.max(20, y)}`;
+                          const y = 360 - (progress * 320);
+                          return `${x},${Math.max(40, y)}`;
                         }).join(' ');
                         
                         return (
@@ -1823,10 +1865,10 @@ const DividendApp: React.FC = () => {
                               fill="none"
                             />
                             {/* 데이터 포인트들 */}
-                            {result.history.slice(0, 12).map((point, i) => {
-                              const x = 50 + (i * 25);
+                            {filteredHistory.map((point, i) => {
+                              const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1)));
                               const progress = point.monthlyDividend / maxDividend;
-                              const y = Math.max(20, 170 - (progress * 150));
+                              const y = Math.max(40, 360 - (progress * 320));
                               
                               return (
                                 <circle
@@ -1931,16 +1973,61 @@ const DividendApp: React.FC = () => {
                       <text x="75" y="300" fontSize="11" fill="#666" textAnchor="end">200%</text>
                       <text x="75" y="365" fontSize="11" fill="#666" textAnchor="end">0%</text>
                       
+                      {/* 막대 그래프 */}
+                      {simulationResults.map((result, scenarioIdx) => {
+                        if (!result.history || result.history.length === 0) return null;
+                        
+                        // 보기 방식에 따른 데이터 필터링
+                        const getFilteredHistory = () => {
+                          const step = viewMode === 'monthly' ? 1 : 
+                                     viewMode === 'quarterly' ? 3 : 
+                                     viewMode === 'halfyearly' ? 6 : 12;
+                          return result.history.filter((_, i) => i % step === 0).slice(0, 20);
+                        };
+                        
+                        const filteredHistory = getFilteredHistory();
+                        const barWidth = 15;
+                        
+                        return filteredHistory.map((point, i) => {
+                          const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1))) + (scenarioIdx * (barWidth + 2)) - (simulationResults.length * (barWidth + 2) / 2);
+                          const returnRate = ((point.capital - simulationInputs.initialCapital) / simulationInputs.initialCapital) * 100;
+                          const progress = Math.min(returnRate / 1000, 1); // 최대 1000%로 제한
+                          const barHeight = progress * 320;
+                          
+                          return (
+                            <rect
+                              key={`return-bar-${scenarioIdx}-${i}`}
+                              x={x}
+                              y={360 - barHeight}
+                              width={barWidth}
+                              height={barHeight}
+                              fill={result.color}
+                              fillOpacity="0.3"
+                              rx="2"
+                            />
+                          );
+                        });
+                      })}
+                      
                       {/* 수익률 곡선들 */}
                       {simulationResults.map((result, idx) => {
                         if (!result.history || result.history.length === 0) return null;
                         
-                        const points = result.history.slice(0, 12).map((point, i) => {
-                          const x = 50 + (i * 25);
+                        // 보기 방식에 따른 데이터 필터링
+                        const getFilteredHistory = () => {
+                          const step = viewMode === 'monthly' ? 1 : 
+                                     viewMode === 'quarterly' ? 3 : 
+                                     viewMode === 'halfyearly' ? 6 : 12;
+                          return result.history.filter((_, i) => i % step === 0).slice(0, 20);
+                        };
+                        
+                        const filteredHistory = getFilteredHistory();
+                        const points = filteredHistory.map((point, i) => {
+                          const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1)));
                           const returnRate = ((point.capital - simulationInputs.initialCapital) / simulationInputs.initialCapital) * 100;
                           const progress = Math.min(returnRate / 1000, 1); // 최대 1000%로 제한
-                          const y = 170 - (progress * 150);
-                          return `${x},${Math.max(20, y)}`;
+                          const y = 360 - (progress * 320);
+                          return `${x},${Math.max(40, y)}`;
                         }).join(' ');
                         
                         return (
@@ -1952,11 +2039,22 @@ const DividendApp: React.FC = () => {
                               fill="none"
                             />
                             {/* 데이터 포인트들 */}
-                            {result.history.slice(0, 12).map((point, i) => {
-                              const x = 50 + (i * 25);
+                            {filteredHistory.map((point, i) => {
+                              const x = 100 + (i * (600 / Math.max(1, filteredHistory.length - 1)));
                               const returnRate = ((point.capital - simulationInputs.initialCapital) / simulationInputs.initialCapital) * 100;
                               const progress = Math.min(returnRate / 1000, 1);
-                              const y = Math.max(20, 170 - (progress * 150));
+                              const y = Math.max(40, 360 - (progress * 320));
+                              
+                              const getPeriodLabel = () => {
+                                const startDate = new Date();
+                                const targetDate = new Date(startDate);
+                                targetDate.setMonth(targetDate.getMonth() + point.month);
+                                
+                                const year = targetDate.getFullYear().toString().slice(-2);
+                                const month = targetDate.getMonth() + 1;
+                                
+                                return `${year}년 ${month}월`;
+                              };
                               
                               return (
                                 <circle
