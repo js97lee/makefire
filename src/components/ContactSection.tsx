@@ -14,7 +14,7 @@ const ContactSection: React.FC = () => {
         justifyContent: 'center',
         gap: 8,
         color: '#fff',
-        fontSize: 18
+        fontSize: 16
       }}>
         <div style={{
           width: 16,

@@ -76,6 +76,20 @@ const IntroTab: React.FC<IntroTabProps> = ({ setActiveTab }) => {
           }}>
             <button
               onClick={() => setActiveTab('portfolio')}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(74, 144, 226, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(74, 144, 226, 0.3)';
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(0.98)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px) scale(1)';
+              }}
               style={{
                 background: 'linear-gradient(135deg, #4a90e2, #357abd)',
                 color: '#fff',
@@ -86,13 +100,30 @@ const IntroTab: React.FC<IntroTabProps> = ({ setActiveTab }) => {
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
-                boxShadow: '0 4px 12px rgba(74, 144, 226, 0.3)'
+                boxShadow: '0 4px 12px rgba(74, 144, 226, 0.3)',
+                transform: 'translateY(0)'
               }}
             >
               📊 포트폴리오 시작하기
             </button>
             <button
               onClick={() => setActiveTab('simulation')}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#4a90e2';
+                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#4a90e2';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(0.98)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px) scale(1)';
+              }}
               style={{
                 background: 'transparent',
                 color: '#4a90e2',
@@ -102,7 +133,8 @@ const IntroTab: React.FC<IntroTabProps> = ({ setActiveTab }) => {
                 fontSize: 16,
                 fontWeight: 600,
                 cursor: 'pointer',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                transform: 'translateY(0)'
               }}
             >
               🎯 목표 시뮬레이션
@@ -138,7 +170,7 @@ const IntroTab: React.FC<IntroTabProps> = ({ setActiveTab }) => {
           <div key={index} style={{
             background: '#1a1a1a',
             borderRadius: 12,
-            padding: 32,
+            padding: '32px 40px',
             border: '1px solid #3a3a3a'
           }}>
             <div style={{

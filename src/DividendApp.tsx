@@ -210,6 +210,24 @@ const DividendApp: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as TabType)}
+              onMouseEnter={(e) => {
+                if (activeTab !== tab.id) {
+                  e.currentTarget.style.background = '#2a2a2a';
+                  e.currentTarget.style.color = '#fff';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== tab.id) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#aaa';
+                }
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.transform = 'scale(0.98)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
               style={{
                 flex: 1,
                 padding: '8px 16px',
@@ -217,10 +235,11 @@ const DividendApp: React.FC = () => {
                 borderRadius: 4,
                 background: activeTab === tab.id ? '#4a90e2' : 'transparent',
                 color: activeTab === tab.id ? '#fff' : '#aaa',
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: 600,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                transform: 'scale(1)'
               }}
             >
               {tab.label}
