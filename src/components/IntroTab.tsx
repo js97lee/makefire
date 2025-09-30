@@ -37,14 +37,14 @@ const IntroTab: React.FC<IntroTabProps> = ({ setActiveTab }) => {
         }} />
         
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{
+          <div className="english-text" style={{
             fontSize: 48,
             marginBottom: 12,
-            fontWeight: 800,
+            fontWeight: 300,
             letterSpacing: '2px',
             color: '#fff'
           }}>
-            DIVE : Dive in Dividend
+            <span style={{ fontWeight: 700 }}>DIVE</span> : Dive in Dividend
           </div>
           
           <h2 style={{
@@ -54,7 +54,7 @@ const IntroTab: React.FC<IntroTabProps> = ({ setActiveTab }) => {
             marginBottom: 16,
             lineHeight: 1.2
           }}>
-            배당 재투자를 위한 플래너, 다이브
+            배당 재투자를 위한 플래너, <span style={{ fontWeight: 800 }}>다이브</span>
           </h2>
           
           <p style={{
@@ -77,56 +77,24 @@ const IntroTab: React.FC<IntroTabProps> = ({ setActiveTab }) => {
             <button
               onClick={() => setActiveTab('portfolio')}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(74, 144, 226, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(74, 144, 226, 0.3)';
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(0.98)';
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px) scale(1)';
-              }}
-              style={{
-                background: 'linear-gradient(135deg, #4a90e2, #357abd)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
-                padding: '12px 24px',
-                fontSize: 16,
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 4px 12px rgba(74, 144, 226, 0.3)',
-                transform: 'translateY(0)'
-              }}
-            >
-              📊 포트폴리오 시작하기
-            </button>
-            <button
-              onClick={() => setActiveTab('simulation')}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#4a90e2';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #4a90e2, #357abd)';
                 e.currentTarget.style.color = '#fff';
-                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.border = '2px solid #4a90e2';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = '#4a90e2';
-                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.border = '2px solid #4a90e2';
               }}
               onMouseDown={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(0.98)';
+                e.currentTarget.style.transform = 'scale(0.98)';
               }}
               onMouseUp={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px) scale(1)';
+                e.currentTarget.style.transform = 'scale(1)';
               }}
               style={{
                 background: 'transparent',
-                color: '#4a90e2',
+                color: '#fff',
                 border: '2px solid #4a90e2',
                 borderRadius: 8,
                 padding: '12px 24px',
@@ -134,7 +102,40 @@ const IntroTab: React.FC<IntroTabProps> = ({ setActiveTab }) => {
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
-                transform: 'translateY(0)'
+                transform: 'scale(1)'
+              }}
+            >
+              📊 포트폴리오 시작하기
+            </button>
+            <button
+              onClick={() => setActiveTab('simulation')}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #4a90e2, #357abd)';
+                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.border = '2px solid #4a90e2';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.border = '2px solid #4a90e2';
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.transform = 'scale(0.98)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+              style={{
+                background: 'transparent',
+                color: '#fff',
+                border: '2px solid #4a90e2',
+                borderRadius: 8,
+                padding: '12px 24px',
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                transform: 'scale(1)'
               }}
             >
               🎯 목표 시뮬레이션

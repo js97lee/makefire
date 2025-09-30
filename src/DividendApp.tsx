@@ -38,6 +38,9 @@ const DividendApp: React.FC = () => {
 
   // 보기 방식 상태
   const [viewMode, setViewMode] = useState<ViewMode>('quarterly');
+  
+  // 모바일 뷰 토글 상태
+  const [isMobileView, setIsMobileView] = useState(false);
 
   // 커스텀 훅 사용
   const { searchResults, isSearching, searchStock, clearResults } = useStockSearch();
@@ -135,12 +138,94 @@ const DividendApp: React.FC = () => {
     <div style={{ 
       minHeight: '100vh', 
       background: '#111111',
-      padding: '60px 20px 20px 20px',
-      fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
+      padding: isMobileView ? '40px 16px 20px 16px' : '60px 20px 20px 20px',
+      fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+      position: 'relative'
     }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      {/* 모바일 뷰 토글 버튼 (PC에서만 표시) */}
+      <div style={{
+        position: 'fixed',
+        top: 20,
+        right: 20,
+        zIndex: 1000,
+        display: window.innerWidth > 768 ? 'flex' : 'none',
+        gap: 8
+      }}>
+        <button
+          onClick={() => setIsMobileView(false)}
+          style={{
+            width: 40,
+            height: 40,
+            background: !isMobileView ? '#4a90e2' : '#fff',
+            border: 'none',
+            borderRadius: '50%',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: !isMobileView ? '#fff' : '#666' }}>
+            <rect x="2" y="4" width="20" height="12" rx="2" stroke="currentColor" strokeWidth="2"/>
+            <rect x="2" y="16" width="20" height="2" rx="1" fill="currentColor"/>
+          </svg>
+        </button>
+        <button
+          onClick={() => setIsMobileView(true)}
+          style={{
+            width: 40,
+            height: 40,
+            background: isMobileView ? '#4a90e2' : '#fff',
+            border: 'none',
+            borderRadius: '50%',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: isMobileView ? '#fff' : '#666' }}>
+            <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" strokeWidth="2"/>
+            <line x1="12" y1="18" x2="12.01" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </button>
+      </div>
+      
+      <div style={{ 
+        maxWidth: isMobileView ? 400 : 1200, 
+        margin: '0 auto',
+        transition: 'max-width 0.3s ease'
+      }}>
         {/* 헤더 */}
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <div 
+          onClick={() => setActiveTab('intro')}
+          style={{ 
+            textAlign: 'center', 
+            marginBottom: 40,
+            cursor: 'pointer',
+            transition: 'opacity 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '0.8';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '1';
+          }}
+        >
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -150,7 +235,7 @@ const DividendApp: React.FC = () => {
           }}>
             <div style={{
               background: 'linear-gradient(135deg, #4a90e2, #357abd)',
-              borderRadius: 12,
+              borderRadius: 6,
               padding: 12,
               display: 'flex',
               alignItems: 'center',
@@ -235,7 +320,7 @@ const DividendApp: React.FC = () => {
                 borderRadius: 4,
                 background: activeTab === tab.id ? '#4a90e2' : 'transparent',
                 color: activeTab === tab.id ? '#fff' : '#aaa',
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
@@ -300,9 +385,6 @@ const DividendApp: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Google AdSense 광고 */}
-            <AdSenseAd />
 
             {/* 월별 배당금 차트 */}
             <div style={{ 
@@ -788,6 +870,11 @@ const DividendApp: React.FC = () => {
                   );
                 })}
               </div>
+            </div>
+            
+            {/* Google AdSense 광고 */}
+            <div style={{ marginBottom: isMobileView ? 10 : 15 }}>
+              <AdSenseAd />
             </div>
             
             {/* 문의하기 섹션 */}
@@ -1341,22 +1428,26 @@ const DividendApp: React.FC = () => {
               }}>
                 <div style={{ 
                   display: 'flex', 
+                  flexDirection: isMobileView ? 'column' : 'row',
                   justifyContent: 'space-between', 
-                  alignItems: 'center',
+                  alignItems: isMobileView ? 'stretch' : 'center',
+                  gap: isMobileView ? 12 : 0,
                   marginBottom: 16
                 }}>
                   <h3 style={{ 
                     color: '#fff', 
-                    fontSize: 16, 
+                    fontSize: isMobileView ? 14 : 16, 
                     fontWeight: 600,
-                    margin: 0
+                    margin: 0,
+                    textAlign: isMobileView ? 'center' : 'left'
                   }}>
                     📊 상세 분석 그래프
                   </h3>
                   
                   <div style={{ 
-                    display: 'flex', 
-                    gap: 4, 
+                    display: 'grid',
+                    gridTemplateColumns: isMobileView ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+                    gap: isMobileView ? 6 : 4, 
                     background: '#1a1a1a',
                     borderRadius: 6,
                     padding: 2
@@ -1371,12 +1462,12 @@ const DividendApp: React.FC = () => {
                         key={mode.id}
                         onClick={() => setViewMode(mode.id as any)}
                         style={{
-                          padding: '6px 12px',
+                          padding: isMobileView ? '8px 6px' : '6px 12px',
                           border: 'none',
                           borderRadius: 4,
                           background: viewMode === mode.id ? '#4a90e2' : 'transparent',
                           color: viewMode === mode.id ? '#fff' : '#aaa',
-                          fontSize: 12,
+                          fontSize: isMobileView ? 11 : 12,
                           fontWeight: 500,
                           cursor: 'pointer',
                           transition: 'all 0.2s ease'

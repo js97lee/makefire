@@ -4,8 +4,8 @@ const ContactSection: React.FC = () => {
   return (
     <div style={{
       textAlign: 'center',
-      marginTop: 60,
-      paddingTop: 40,
+      marginTop: window.innerWidth <= 768 ? 10 : 15,
+      paddingTop: window.innerWidth <= 768 ? 15 : 20,
       borderTop: '1px solid #3a3a3a'
     }}>
       <div style={{
@@ -47,20 +47,20 @@ const ContactSection: React.FC = () => {
       
       {/* 소개 텍스트 */}
       <div style={{
-        marginTop: 24,
-        padding: '24px',
+        marginTop: window.innerWidth <= 768 ? 12 : 16,
+        padding: window.innerWidth <= 768 ? '12px' : '16px',
         background: '#1a1a1a',
         borderRadius: 12,
         border: '1px solid #3a3a3a',
         width: '100%',
-        margin: '24px 0 60px 0',
+        margin: window.innerWidth <= 768 ? '12px 0 30px 0' : '16px 0 40px 0',
         boxSizing: 'border-box'
       }}>
         <p style={{
           color: '#aaa',
           fontSize: 15,
           lineHeight: 1.7,
-          margin: '0 80px',
+          margin: window.innerWidth <= 768 ? '0 20px' : '0 20px',
           textAlign: 'center'
         }}>
           배당 투자에 관심이 많은 UX디자이너, Scarlett 입니다. 열심히 웹페이지를 만들어보고 있습니다.<br />
